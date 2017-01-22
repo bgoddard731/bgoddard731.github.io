@@ -7,7 +7,7 @@ angular
 interviewResource.$inject = ['$resource'];
 
 function interviewResource($resource) {
-    var ipAddress = 'http://70.117.102.80';
+    var ipAddress = 'https://70.117.102.80';
     return $resource(ipAddress + '/interview', {}, {
         queryDay: {
             url: ipAddress + "/interview/day/:day/availability",
