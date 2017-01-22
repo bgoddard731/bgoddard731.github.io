@@ -1,0 +1,41 @@
+@import "variables";
+
+p {
+  //background-color: $impact-light;
+  font-size: 1em;
+}
+
+.menu {
+  list-style: none;
+  border-bottom: 0.1em solid black;
+  margin-bottom: 2em;
+  padding: 0 0 0.5em;
+  text-align: center;
+
+  &:after {
+    content: "]";
+  }
+
+  &:before {
+    content: "[";
+  }
+
+  li {
+    display: inline;
+  }
+
+  li + li:before {
+    content: "|";
+    padding-right: 0.3em;
+  }
+}
+
+.available { background-color: limegreen}
+
+.diffMonth { background-color: darkgrey}
+
+.noInterview{  background-color: $impact-light}
+
+.disabled { background-color: $impact-light}
+
+.diffMonth { background-color: darkgrey}
