@@ -23,39 +23,39 @@ var app = angular.module('app', [
 ]).config(function($stateProvider, stateHelperProvider, $urlRouterProvider) {
     stateHelperProvider
     //without a url element in state, basically just changes what html is rendered
-        .state({
-            name: 'view1',
-            url: '/view1',
-            templateUrl: '/view1/view1.html'
-        })
-        .state({
-            name: 'applications',
-            url: '/applications',
-            templateUrl: '/applications/applications.html',
-            controller: 'ApplicationsController as vm'
-        })
-        .state({
-            name: 'interview',
-            url: '/interview',
-            templateUrl: '/interview/interview.html',
-            controller: 'InterviewController as vm',
-            // Default applicant
-            params: {
-                applicant: {}
-            }
-            //   applicant: {
-            //       firstName : "Bob",
-            //       lastName : "Sagot",
-            //       emailAddress : "bsag@gmail.com",
-            //       gender : true
-            //   }
-            // }
-        })
-        .state({
-            name: 'login',
-            url: '/login',
-            templateUrl: '/core/login.html'
-        })
+        // .state({
+        //     name: 'view1',
+        //     url: '/view1',
+        //     templateUrl: '/view1/view1.html'
+        // })
+        // .state({
+        //     name: 'applications',
+        //     url: '/applications',
+        //     templateUrl: '/applications/applications.html',
+        //     controller: 'ApplicationsController as vm'
+        // })
+        // .state({
+        //     name: 'interview',
+        //     url: '/interview',
+        //     templateUrl: '/interview/interview.html',
+        //     controller: 'InterviewController as vm',
+        //     // Default applicant
+        //     params: {
+        //         applicant: {}
+        //     }
+        //     //   applicant: {
+        //     //       firstName : "Bob",
+        //     //       lastName : "Sagot",
+        //     //       emailAddress : "bsag@gmail.com",
+        //     //       gender : true
+        //     //   }
+        //     // }
+        // })
+        // .state({
+        //     name: 'login',
+        //     url: '/login',
+        //     templateUrl: '/core/login.html'
+        // })
         .state({
             name: 'closed',
             url: '/closed',
@@ -67,11 +67,11 @@ var app = angular.module('app', [
             templateUrl: '/admin/admin.html',
             controller: 'AdminController as vm'
         })
-        .state({
-            name: 'otherwise',
-            url: '/otherwise',
-            template: '<h3>hello</h3>'
-        });
+        // .state({
+        //     name: 'otherwise',
+        //     url: '/otherwise',
+        //     template: '<h3>hello</h3>'
+        // });
 
         // catches bad routes and sends them to the otherwise state
         $urlRouterProvider.otherwise('/closed');
