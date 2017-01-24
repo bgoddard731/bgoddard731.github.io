@@ -9,12 +9,12 @@ adminService.$inject = ['adminResource'];
 function adminService (adminResource) {
 
     return {
-        verifyPassword: verifyPassword
+        verifyLogin: verifyLogin
     };
 
-    function verifyPassword(password) {
+    function verifyLogin(password) {
         console.log('verifying password: ' + password);
-        return adminResource.addApplicant(password).$promise;
+        return adminResource.verifyLogin({password: password}).$promise;
     }
 
     // function changePassword(password) {

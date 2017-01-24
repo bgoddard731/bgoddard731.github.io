@@ -10,8 +10,11 @@ function adminResource($resource) {
     var ipAddress = 'http://70.117.102.80';
     return $resource(ipAddress + '/admin', {}, {
         verifyLogin: {
-            url: ipAddress + '/admin/password',
-            method: 'GET'
+            url: ipAddress + '/admin/:password',
+            method: 'GET',
+            params: {
+                password: '@password'
+            }
         }
     })
 }
