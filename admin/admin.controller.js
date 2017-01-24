@@ -4,25 +4,30 @@ angular
     .module('app.admin')
     .controller('AdminController', AdminController);
 
-AdminController.$inject = ['interviewService', 'applicantService', '$filter', '$mdDialog', 'TEST', 'moment','$state','$stateParams', '$q'];
+AdminController.$inject = ['adminService','interviewService', 'applicantService', '$filter', '$mdDialog', 'TEST', 'moment','$state','$stateParams', '$q'];
 
-function AdminController(interviewService, applicantService, $filter, $mdDialog, TEST, moment, $state, $stateParams, $q)  {
+function AdminController(adminService, interviewService, applicantService, $filter, $mdDialog, TEST, moment, $state, $stateParams, $q)  {
     var vm = this;
 
+
+    //Login vars/functions
+    vm.verifyLogin = verifyLogin;
+    vm.validatedLogin = false;
+    vm.passwordField = "";
+    //Interview Tab variables
     vm.setDirection = setDirection;
     vm.dayClick = dayClick;
     vm.prevMonth = prevMonth;
     vm.prevMonth = nextMonth;
     vm.setDayContent = setDayContent;
     vm.showTimes = showTimes;
-
     vm.selectedDate = "";
     vm.currDate = {};
-    vm.getInterviewForDay = getInterviewForDay;
     vm.noInterviewsOnDay = {};
+    vm.tooltips = true;
 
 
-    //Applicant stuff
+    //Applicant Tab Variables
     vm.querySearch = querySearch;
     vm.apps = [];
     vm.currApp = {};
@@ -43,7 +48,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
     vm.noAvailInterviewsOnDay = {};
     vm.moveIntActive = false;
 
-    //Export Functions
+    //Export Tab Variables
     vm.updateExportLists = updateExportLists;
     vm.allAppSort = [];
     vm.allIntSort = [];
@@ -55,27 +60,25 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
     vm.clearAllInterviews = clearAllInterviews;
 
 
-    function getInterviewForDay(day) {
-        var formatDay = moment(day).format('YYYY-MM-DD');
+//LOGIN FUNCTION****************************************************************
 
-        return interviewService.queryDay(formatDay).$promise;
-
+    function verifyLogin(){
+      vm.validatedLogin = adminService.verifyLogin(vm.passwordField).$promise;
     }
 
+//INTERVIEW TAB FUNCTIONS*******************************************************
 
-    /* Calendar Functions */
-
+    /* Interview Tab Calendar Functions */
     function setDirection (direction) {
         vm.direction = direction;
         vm.dayFormat = direction === "vertical" ? "EEEE, MMMM d" : "d";
     }
-
+    //Called when a day is clicked
     function dayClick(date) {
         vm.currDate = date;
         vm.selectedDate = $filter("date")(date, "MMMM d, y");
         showTimes(moment(date).format('YYYY-MM-DD'));
     }
-
     function prevMonth(data) {
         vm.msg = "You clicked (prev) month " + data.month + ", " + data.year;
     }
@@ -83,52 +86,36 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
     function nextMonth(data) {
         vm.msg = "You clicked (next) month " + data.month + ", " + data.year;
     }
+
+    //Sets the content of the day boxes on the calendar
     function setDayContent(date) {
         var formatDay = moment(date).format('YYYY-MM-DD');
-
         return interviewService.queryDayAdmin(formatDay).then(function(resp) {
-
-
+          var text = '';
+          var count = 0;
             // If there are any interview returned
             if(resp.length > 0){
                 console.log(date);
                 vm.noInterviewsOnDay[formatDay] = false;
-
-                // _.forEach(resp, function(index){
-                //     text = text + '1';
-                //     numInterviews = numInterviews + 1;
-                // });
-
-                // var day = moment(date).format('D');
-                // if(false){
-                //   $('div[tabindex='+day+']').removeClass('noInterview');
-                // }
-                // $('div[tabindex='+day+']').removeClass('noInterview');
+                _.forEach(resp, function(index){
+                    count  = count + 1;
+                });
+                text = count + ' interivews';
             }
-
-            // HERE IS WHERE WE CAN SEE IF THERE ARE NO INTERVIEWS FOR THAT DAY... DISABLE THE DAY SOMEHOW
+            //No interviews on that day
             else {
-                // var day = moment(date).format('D');
-                // $('div[tabindex='+day+']').css({'background': 'red', 'color': 'white'});
                  vm.noInterviewsOnDay[formatDay] = true;
-                // if(false){
-                //   $('div[tabindex='+day+']').addClass('noInterview');
-                // }
-                //$('div[tabindex='+day+']').addClass('noInterview');
-
-
+                 text = '0 Interviews';
             }
-            return ' ';
+            return "<p>"+text+"</p>";//Use blank to hold space on dates
         });
 
-      }
+    }
 
-
-
+      //Shows the interviews for a selected day on the Interview tab
       function showTimes(date) {
-
           interviewService.queryDayAdmin(date).then(function(resp) {
-
+             //Add the pretty versions of the strings to present to user
               _.forEach(resp, function(interview){
                   console.log(interview);
                   interview.startDatePretty = moment(interview.startDate).format('h:mm a');
@@ -138,8 +125,8 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                   }else{
                     interview.applicantFull = "<Empty>"
                   }
-
               });
+              //Sort by start time
               resp.sort(function(a,b){
                   if ( a.startDate < b.startDate )
                     return -1;
@@ -147,7 +134,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                     return 1;
                   return 0;
               });
-
+              //Show a popup dialog with the times
               $mdDialog.show({
                   controller: DialogController,
                   templateUrl: 'admin/admin.interview.day.html',
@@ -162,20 +149,10 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                   }
               })
                   .then(function(selectedInterview) {
+                    //Closed the dialog
                     setDayContent(date);
-                  //     if(!_.isEmpty(vm.applicant)) {
-                  //         vm.msg = 'You selected interview "' + selectedInterview + '".';
-                  //         applicantService.addApplicant(vm.applicant).then(function(resp) {
-                  //             //resp is the newly added applicant
-                  //             interviewService.assignApplicantToInterview(selectedInterview, resp).then(function(resp){
-                  //                 setDayContent(date);
-                  //             })
-                  //         })
-                  //     }
-                  //     else {
-                  //         vm.msg = 'No applicant was available to be sent. Please try logging in again!';
-                  //     }
                   }, function() {
+                    //Clicked outside dialog
                       setDayContent(date);
                       vm.msg = 'You cancelled the dialog.';
                   });
@@ -184,7 +161,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
           });
       }
 
-
+      //Controller for Calendar on the Interview Tab
       function DialogController($scope, $mdDialog, selectedDate, currDate, showTimes, interviews) {
           $scope.selectedDate = selectedDate;
           $scope.currDate = currDate;
@@ -195,8 +172,9 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
           $scope.numberOfSlots=1;
           $scope.newInterview = {};
 
+          //Delete an interview
           $scope.deleteInterview = function (interview){
-
+              //Confirm dialog for interviews that have applicants
               $scope.showConfirm = function() {
               // Appending dialog to document.body to cover sidenav in docs app
               var confirm = $mdDialog.confirm()
@@ -220,9 +198,12 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                 });
               };
 
+
+              //If applicant is in slot, show confirm dialog
             if(interview.applicantFull !== "<Empty>"){
               $scope.showConfirm();
             }else{
+              //Delete without confirm for empty interviews
               console.log(interview.id);
               var index = $scope.interviews.indexOf(interview);
 
@@ -242,9 +223,8 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
               setDayContent($scope.currDate);
               $mdDialog.cancel();
           };
-
+          //Adds an interview(s) to database
           $scope.addInterview = function (){
-
              $scope.newInterview = {
                 "startDate": $scope.startDate.getTime(),
                 "endDate": $scope.endDate.getTime(),
@@ -268,17 +248,21 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
 
 //App page stuff**************************************************************************
 
-
+        //Called on page load. Loads all of the interviews that have applicants into global var
         function loadAllFullInterviews() {
+              //curr app to be examined
               vm.currApp = {};
               interviewService.getAllFullInterviews().then(function(resp) {
                 var apps = [];
+                //Add the pretty strings to apps
                 _.forEach(resp, function(app){
+                  //For searching
                   app.value = app.applicant.firstName.toLowerCase() + " " + app.applicant.lastName.toLowerCase() + " " + app.applicant.emailAddress.toLowerCase(),
+                  //For displaying to screen
                   app.fullDisplayName = app.applicant.lastName + ", " + app.applicant.firstName + " @ " + app.applicant.emailAddress
                   apps.push(app);
                 });
-
+                //Sort by last name, then first name
                 apps.sort(function(a,b){
                   if ( a.applicant.lastName.toLowerCase() < b.applicant.lastName.toLowerCase() )
                     return -1;
@@ -294,27 +278,22 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                 console.log(vm.apps);
               });
         }
-        function appSortfunction(a,b){
-          return a.applicant.lastName - b.applicant.lastName;
-        }
+
+        //Used for the autocomplete to search through applicants
         function querySearch (query) {
           console.log(vm.apps);
-          // _.forEach(vm.apps, function(app){
-          //     console.log(app);
-          //     app.value = app.applicant.lastName;
-          // });
           var results = query ? vm.apps.filter( createFilterFor(query) ) : vm.apps;
           return results;
         }
-
+        //Query through, case insensitive
         function createFilterFor(query) {
           var lowercaseQuery = angular.lowercase(query);
-
+          //Match anywhere in the value field
           return function filterFn(app) {
             return (app.value.indexOf(lowercaseQuery) >= 0);
           };
         }
-
+        //Display the selected app in the input fields
         function displaySelApp(app){
           app.datePretty = moment(app.startDate).format('MM/D/YYYY');
           app.startDatePretty = moment(app.startDate).format('h:mm a');
@@ -322,10 +301,13 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
           vm.currApp = app;
           vm.appActive = true;
         }
+        //Show the move time calendar
         function editAppInterview(){
           vm.moveIntActive = true;
         }
+        //Delete an applicant from the system
         function deleteApp(){
+          //Confirm deletion
           var confirm = $mdDialog.confirm()
                 .title('Are you sure?')
                 .textContent('This action cannot be undone and the applicant will have to re-sign up. (This action does not delete the interview slot, use the Interview tab to delete interview slots.)')
@@ -349,14 +331,15 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
             });
         }
 
+        //Shows available interviews in the applicant tab for moving interviews
         function interviewDayClick(date) {
           console.log(vm.applicant);
-            //getInterviewForDay(date);
             vm.msg = "You clicked " + $filter("date")(date, "MMM d, y h:mm:ss a Z");
             vm.selectedDate = $filter("date")(date, "MMMM d, y");
             vm.msg = vm.selectedDate;
             showIntTimes(moment(date).format('YYYY-MM-DD'));
         }
+        //Load dialog with available times to move to
         function showIntTimes(date) {
 
             interviewService.queryDay(date).then(function(resp) {
@@ -386,15 +369,17 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                     }
                 })
                     .then(function(selectedInterview) {
+                        //Move applicant to new interview time
                         if(!_.isEmpty(vm.currApp)) {
                           interviewService.removeApplicantToInterview(vm.currApp, vm.currApp.applicant).then(function(resp) {
                             interviewService.assignApplicantToInterview(selectedInterview, vm.currApp.applicant).then(function(resp){
-
+                                //hide the move calendar, then set the active applicant to new interivew time
                                 interviewSetDayContent(date);
                                 vm.moveIntActive = false;
                                 vm.currApp.datePretty = moment(selectedInterview.startDate).format('MM/D/YYYY');
                                 vm.currApp.startDatePretty = moment(selectedInterview.startDate).format('h:mm a');
                                 vm.currApp.endDatePretty = moment(selectedInterview.endDate).format('h:mm a');
+                                //Show confirmation dialog
                                 $mdDialog.show(
                                   $mdDialog.alert()
                                     .parent(angular.element(document.querySelector('#popupContainer')))
@@ -408,7 +393,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                           });
                         }
                         else {
-                            vm.msg = 'No applicant was available to be sent. Please try logging in again!';
+                            //No applicant to move to new interview
                         }
                     }, function() {
                         vm.msg = 'You cancelled the dialog.';
@@ -418,7 +403,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
 
             });
         }
-
+        //Controller for the Move calendar
         function IntDialogController($scope, $mdDialog, selectedDate, interviews) {
             $scope.selectedDate = selectedDate;
             $scope.interviews = interviews;
@@ -434,11 +419,9 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                 $mdDialog.hide(answer);
             };
         }
+        //Sets the content for the move calendar and add calendar
         function interviewSetDayContent(date) {
-
-
             var formatDay = moment(date).format('YYYY-MM-DD');
-
             return interviewService.queryDay(formatDay).then(function(resp) {
                 var text = '';
                 var count = 0;
@@ -450,11 +433,11 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                     });
                     text = count + ' open';
                 }
-                // HERE IS WHERE WE CAN SEE IF THERE ARE NO INTERVIEWS FOR THAT DAY... DISABLE THE DAY SOMEHOW
+                //no interviews
                 else {
                     var day = moment(date).format('D');
                     vm.noAvailInterviewsOnDay[formatDay] = true;
-                    text = 'None';
+                    text = '0 Open';
                 }
                 return "<p>"+text+"</p>";
             });
@@ -462,28 +445,27 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
 
 
 
-//Stuff to add  new Applicant
+        //Stuff to add  new Applicant
         function addNewApplicant(){
+          vm.newApplicant = {};
           vm.addingApp = true;
+
         }
         function showAddCalendar(){
           vm.addAppActive=true;
         }
 
-
-
+        //Clicking a day in the add applicant calendar
         function addAppToDayClick(date) {
           console.log(vm.newApplicant);
-            //getInterviewForDay(date);
             vm.msg = "You clicked " + $filter("date")(date, "MMM d, y h:mm:ss a Z");
             vm.selectedDate = $filter("date")(date, "MMMM d, y");
             vm.msg = vm.selectedDate;
             showNewAppTimes(moment(date).format('YYYY-MM-DD'));
         }
+        //Show dialog for adding an applicant calendar
         function showNewAppTimes(date) {
-
             interviewService.queryDay(date).then(function(resp) {
-
                 _.forEach(resp, function(interview){
                     console.log(interview);
                     interview.startDatePretty = moment(interview.startDate).format('h:mm a');
@@ -496,7 +478,6 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                       return 1;
                     return 0;
                 });
-
                 $mdDialog.show({
                     controller: IntDialogController,
                     templateUrl: 'interview/interview.day.html',
@@ -508,21 +489,22 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
                         interviews: resp
                     }
                 })
+                //Create new applicant, then assign to time
                     .then(function(selectedInterview) {
                         if(!_.isEmpty(vm.newApplicant)) {
                           applicantService.addApplicant(vm.newApplicant).then(function(resp) {
                               //resp is the newly added applicant
                               interviewService.assignApplicantToInterview(selectedInterview, resp).then(function(resp){
-
+                                //Reset content
                                 interviewSetDayContent(date);
                                 vm.addingApp = false;
                                 vm.addAppActive = false;
                                 loadAllFullInterviews();
-                                vm.newApplicant = {};
                                 vm.currApp = {};
                                 selectedInterview.datePretty = moment(selectedInterview.startDate).format('MM/D/YYYY');
                                 selectedInterview.startDatePretty = moment(selectedInterview.startDate).format('h:mm a');
                                 selectedInterview.endDatePretty = moment(selectedInterview.endDate).format('h:mm a');
+                                //Show confirmation
                                 $mdDialog.show(
                                   $mdDialog.alert()
                                     .parent(angular.element(document.querySelector('#popupContainer')))
@@ -550,6 +532,8 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
 
 
 ////*********Reset Table functions
+
+      //Delete all apps from database
       function clearAllApps(){
             var confirm = $mdDialog.prompt()
               .title('ARE YOU SURE?????')
@@ -592,6 +576,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
             });
       }
 
+      //Delete all Interviews and Apps from database
       function clearAllInterviews(){
             // Appending dialog to document.body to cover sidenav in docs app
             var confirm = $mdDialog.prompt()
@@ -637,6 +622,7 @@ function AdminController(interviewService, applicantService, $filter, $mdDialog,
 
 
       ///Export to EXCEL function
+      //Get the latest database entries and put them in list to be exported to CSV
       function updateExportLists(){
         //Get list sorted by app
         interviewService.getAllFullInterviews().then(function(resp) {

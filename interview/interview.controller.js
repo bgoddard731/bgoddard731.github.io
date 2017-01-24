@@ -21,6 +21,11 @@ function InterviewController(interviewService, applicantService, $filter, $mdDia
     vm.tooltips = true;
     vm.applicant = $stateParams.applicant;
     vm.noInterviewsOnDay = {};
+    vm.appHasInterview = false;
+    vm.completedSignup = false;
+    vm.completedInt = {};
+    checkifHasInterview();
+
 
     // vm.applicant = {
     //     firstName : "Bob",
@@ -28,6 +33,33 @@ function InterviewController(interviewService, applicantService, $filter, $mdDia
     //     emailAddress : "bsag@gmail.com",
     //     gender : true
     // };
+
+    //Determines if applicant has interview. if does, displays time:
+    function checkifHasInterview(){
+      if (_.isEmpty(vm.applicant)){
+        vm.appHasInterview = false;
+      }else{
+        console.log(vm.applicant);
+        interviewService.getAllFullInterviews().then(function(resp) {
+          //Match email, firstName, and LastName
+          console.log(resp);
+          _.forEach(resp, function(interview){
+            if(
+                (interview.applicant.firstName.toLowerCase() == vm.applicant.firstName.toLowerCase()) &&
+                (interview.applicant.lastName.toLowerCase() == vm.applicant.lastName.toLowerCase()) &&
+                (interview.applicant.emailAddress == vm.applicant.emailAddress)
+              ){
+                vm.appHasInterview = true;
+                vm.existingInterview = interview;
+                console.log("test");
+                vm.existingInterview.datePretty = moment(interview.startDate).format('MM/D/YYYY');
+                vm.existingInterview.startDatePretty = moment(interview.startDate).format('h:mm a');
+                vm.existingInterview.endDatePretty = moment(interview.endDate).format('h:mm a');
+              }
+          });
+        });
+      }
+    }
 
     /* Helper Functions */
     function getInterviewForDay(day) {
@@ -71,8 +103,8 @@ function InterviewController(interviewService, applicantService, $filter, $mdDia
 
             _.forEach(resp, function(interview){
                 console.log(interview);
-                interview.startDatePretty = moment(interview.startDate).format('YYYY-MM-DD h:mm a');
-                interview.endDatePretty = moment(interview.endDate).format('YYYY-MM-DD h:mm a');
+                interview.startDatePretty = moment(interview.startDate).format('h:mm a');
+                interview.endDatePretty = moment(interview.endDate).format('h:mm a');
             });
             resp.sort(function(a,b){
                 if ( a.startDate < b.startDate )
@@ -99,7 +131,12 @@ function InterviewController(interviewService, applicantService, $filter, $mdDia
                         applicantService.addApplicant(vm.applicant).then(function(resp) {
                             //resp is the newly added applicant
                             interviewService.assignApplicantToInterview(selectedInterview, resp).then(function(resp){
+                                vm.completedInt = selectedInterview;
+                                vm.completedInt.datePretty = moment(vm.completedInt.startDate).format('MM/D/YYYY');
+                                vm.completedInt.startDatePretty = moment(vm.completedInt.startDate).format('h:mm a');
+                                vm.completedInt.endDatePretty = moment(vm.completedInt.endDate).format('h:mm a');
                                 setDayContent(date);
+                                vm.completedSignup = true;
                             })
                         })
                     }
@@ -131,42 +168,25 @@ function InterviewController(interviewService, applicantService, $filter, $mdDia
     }
 
     function setDayContent(date) {
-
-        // var str = 'hello world - hi';
-        //
-        // str = _.startCase(str);
-
-       // var d = moment()._d;
-        // Can manipulate what goes into the day's here... aka available time slots?
-
-        var formatDay = moment(date).format('YYYY-MM-DD');
-
-        return interviewService.queryDay(formatDay).then(function(resp) {
-            var text = '';
-
-            // If there are any interview returned
-            if(resp.length > 0){
-
-                vm.noInterviewsOnDay[formatDay] = false;
-
-                _.forEach(resp, function(index){
-                    text = text + '1';
-                });
-
-                text = text + ' slots available';
-            }
-
-            // HERE IS WHERE WE CAN SEE IF THERE ARE NO INTERVIEWS FOR THAT DAY... DISABLE THE DAY SOMEHOW
-            else {
-                var day = moment(date).format('D');
-
-                vm.noInterviewsOnDay[formatDay] = true;
-
-                //$('div[tabindex='+day+']').css({'background': 'red', 'color': 'white'}).addClass('disabled');
-
-                text = 'None';
-            }
-            return "<p>"+text+"</p>";
+      var formatDay = moment(date).format('YYYY-MM-DD');
+      return interviewService.queryDay(formatDay).then(function(resp) {
+          var text = '';
+          var count = 0;
+          // If there are any interview returned
+          if(resp.length > 0){
+              vm.noInterviewsOnDay[formatDay] = false;
+              _.forEach(resp, function(index){
+                  count  = count + 1;
+              });
+              text = count + ' open';
+          }
+          //no interviews
+          else {
+              var day = moment(date).format('D');
+              vm.noInterviewsOnDay[formatDay] = true;
+              text = '0 Open';
+          }
+          return "<p>"+text+"</p>";
         });
 
 
