@@ -23,11 +23,7 @@ var app = angular.module('app', [
 ]).config(function($stateProvider, stateHelperProvider, $urlRouterProvider) {
     stateHelperProvider
     //without a url element in state, basically just changes what html is rendered
-        .state({
-            name: 'view1',
-            url: '/view1',
-            templateUrl: '/view1/view1.html'
-        })
+      
         .state({
             name: 'applications',
             url: '/applications',
